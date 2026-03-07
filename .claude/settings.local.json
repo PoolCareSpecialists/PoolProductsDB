@@ -15,7 +15,13 @@
       "Bash(npm install @prisma/adapter-pg pg dotenv)",
       "Bash(npm install --save-dev @types/pg)",
       "Bash(npx prisma validate --schema=prisma/schema.prisma)",
-      "Bash(npx shadcn@latest init --yes --defaults)"
+      "Bash(npx shadcn@latest init --yes --defaults)",
+      "Bash(npx shadcn@latest add input badge card table dialog form label select separator skeleton tabs textarea --yes)",
+      "Bash(npm install lucide-react)",
+      "Bash(npx prisma generate)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npm --version)",
+      "Bash(cmd /c \"where npm\")"
     ]
   }
 }
