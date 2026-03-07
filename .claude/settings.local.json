@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.barcodelookup.com)",
+      "WebFetch(domain:go-upc.com)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir=false --import-alias=\"@/*\" --use-npm)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir=false --import-alias=\"@/*\" --use-npm -e \"\")",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir=false --import-alias=\"@/*\" --use-npm --name=\"pool-products-db\")",
+      "Bash(npx create-next-app@latest pool-products-db --typescript --tailwind --eslint --app --src-dir=false --import-alias=\"@/*\" --use-npm --no-git)",
+      "Bash(npx create-next-app@latest pool-products-db --typescript --tailwind --eslint --app --import-alias=\"@/*\" --use-npm --no-git)",
+      "Bash(npx create-next-app@latest pool-products-db --typescript --tailwind --eslint --app --use-npm --no-git)",
+      "Bash(npm install prisma @prisma/client)",
+      "Bash(npx prisma init --datasource-provider postgresql)",
+      "Bash(npx prisma validate)",
+      "Bash(npm install @prisma/adapter-pg pg dotenv)",
+      "Bash(npm install --save-dev @types/pg)",
+      "Bash(npx prisma validate --schema=prisma/schema.prisma)",
+      "Bash(npx shadcn@latest init --yes --defaults)"
+    ]
+  }
+}

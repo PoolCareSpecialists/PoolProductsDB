@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Core Entities ──────────────────────────────────────────────
+
+model Manufacturer {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  website   String?
+  country   String?
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brands Brand[]
+}
+
+model Brand {
+  id             String       @id @default(cuid())
+  manufacturerId String
+  name           String
+  logoUrl        String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  manufacturer Manufacturer @relation(fields: [manufacturerId], references: [id])
+  products     Product[]
+
+  @@unique([manufacturerId, name])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  parentId  String?
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  parent   Category?  @relation("CategoryChildren", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryChildren")
+  products Product[]
+}
+
+// ─── Products ───────────────────────────────────────────────────
+
+model Product {
+  id          String        @id @default(cuid())
+  brandId     String
+  categoryId  String
+  name        String
+  modelNumber String?
+  upc         String?       @unique
+  sku         String?
+  description String?
+  status      ProductStatus @default(ACTIVE)
+  createdById String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  brand    Brand    @relation(fields: [brandId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+  createdBy User?   @relation("ProductCreator", fields: [createdById], references: [id])
+
+  specs                ProductSpec[]
+  maintenanceSchedules MaintenanceSchedule[]
+  documents            Document[]
+  images               ProductImage[]
+  pendingEdits         PendingEdit[]
+  editHistory          EditHistory[]
+
+  replacementPartsFrom    ReplacementPart[]    @relation("SourceProduct")
+  replacementPartsTo      ReplacementPart[]    @relation("CompatibleProduct")
+  compatibleChemicalsFrom CompatibleChemical[] @relation("ChemicalSourceProduct")
+  compatibleChemicalsTo   CompatibleChemical[] @relation("ChemicalProduct")
+
+  @@index([brandId])
+  @@index([categoryId])
+  @@index([upc])
+  @@index([modelNumber])
+}
+
+enum ProductStatus {
+  ACTIVE
+  DISCONTINUED
+  UNKNOWN
+}
+
+// ─── Extended Product Data ───────────────────────────────────────
+
+model ProductSpec {
+  id        String  @id @default(cuid())
+  productId String
+  specKey   String
+  specValue String
+  unit      String?
+  sortOrder Int     @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model MaintenanceSchedule {
+  id            String  @id @default(cuid())
+  productId     String
+  taskName      String
+  intervalValue Int
+  intervalUnit  String
+  notes         String?
+  sortOrder     Int     @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model Document {
+  id           String       @id @default(cuid())
+  productId    String
+  type         DocumentType
+  title        String
+  fileUrl      String?
+  externalUrl  String?
+  uploadedById String?
+  createdAt    DateTime     @default(now())
+
+  product    Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  uploadedBy User?   @relation("DocumentUploader", fields: [uploadedById], references: [id])
+
+  @@index([productId])
+}
+
+enum DocumentType {
+  MANUAL
+  SPEC_SHEET
+  WARRANTY
+  INSTALLATION_GUIDE
+  PARTS_LIST
+  OTHER
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  altText   String?
+  isPrimary Boolean @default(false)
+  sortOrder Int     @default(0)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+// ─── Relationships ────────────────────────────────────────────────
+
+model ReplacementPart {
+  id                  String  @id @default(cuid())
+  sourceProductId     String
+  compatibleProductId String
+  notes               String?
+
+  sourceProduct     Product @relation("SourceProduct", fields: [sourceProductId], references: [id], onDelete: Cascade)
+  compatibleProduct Product @relation("CompatibleProduct", fields: [compatibleProductId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceProductId, compatibleProductId])
+}
+
+model CompatibleChemical {
+  id                String  @id @default(cuid())
+  sourceProductId   String
+  chemicalProductId String
+  notes             String?
+
+  sourceProduct   Product @relation("ChemicalSourceProduct", fields: [sourceProductId], references: [id], onDelete: Cascade)
+  chemicalProduct Product @relation("ChemicalProduct", fields: [chemicalProductId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceProductId, chemicalProductId])
+}
+
+// ─── Users ───────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      UserRole @default(CONTRIBUTOR)
+  apiKey    String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdProducts   Product[]     @relation("ProductCreator")
+  uploadedDocuments Document[]    @relation("DocumentUploader")
+  submittedEdits    PendingEdit[] @relation("EditSubmitter")
+  reviewedEdits     PendingEdit[] @relation("EditReviewer")
+  editHistory       EditHistory[]
+}
+
+enum UserRole {
+  ADMIN
+  CONTRIBUTOR
+  VIEWER
+}
+
+// ─── Contribution & Approval Workflow ────────────────────────────
+
+model PendingEdit {
+  id            String     @id @default(cuid())
+  productId     String?
+  submittedById String
+  fieldChanges  Json
+  status        EditStatus @default(PENDING)
+  reviewedById  String?
+  reviewedAt    DateTime?
+  reviewNotes   String?
+  createdAt     DateTime   @default(now())
+
+  product     Product? @relation(fields: [productId], references: [id])
+  submittedBy User     @relation("EditSubmitter", fields: [submittedById], references: [id])
+  reviewedBy  User?    @relation("EditReviewer", fields: [reviewedById], references: [id])
+
+  @@index([status])
+  @@index([productId])
+}
+
+model EditHistory {
+  id           String   @id @default(cuid())
+  productId    String
+  changedById  String
+  fieldChanges Json
+  changedAt    DateTime @default(now())
+
+  product   Product @relation(fields: [productId], references: [id])
+  changedBy User    @relation(fields: [changedById], references: [id])
+
+  @@index([productId])
+}
+
+enum EditStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
