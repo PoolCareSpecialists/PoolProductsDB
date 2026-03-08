@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth, SignInButton, UserButton } from "@clerk/nextjs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
-import { Search } from "lucide-react";
+import { Search, ScanBarcode } from "lucide-react";
 
 export function SiteHeader() {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const { isSignedIn, isLoaded } = useAuth();
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +43,16 @@ export function SiteHeader() {
               className="pl-9"
             />
           </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            title="Scan barcode"
+            onClick={() => router.push("/search?scan=1")}
+            className="px-2.5"
+          >
+            <ScanBarcode className="h-4 w-4" />
+          </Button>
           <Button type="submit" size="sm">
             Search
           </Button>
@@ -50,12 +62,22 @@ export function SiteHeader() {
           <ButtonLink variant="ghost" size="sm" href="/products">
             Browse
           </ButtonLink>
-          <ButtonLink variant="ghost" size="sm" href="/admin">
-            Admin
-          </ButtonLink>
-          <ButtonLink size="sm" href="/account">
-            Sign In
-          </ButtonLink>
+          {isLoaded && isSignedIn && (
+            <ButtonLink variant="ghost" size="sm" href="/admin">
+              Admin
+            </ButtonLink>
+          )}
+          {isLoaded && !isSignedIn && (
+            <SignInButton mode="modal">
+              <Button size="sm">Sign In</Button>
+            </SignInButton>
+          )}
+          {isLoaded && isSignedIn && (
+            <UserButton
+              appearance={{ elements: { avatarBox: "w-8 h-8" } }}
+              userProfileUrl="/account"
+            />
+          )}
         </nav>
       </div>
     </header>
