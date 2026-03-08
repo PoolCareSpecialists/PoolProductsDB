@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { Search } from "lucide-react";
 
 export function SiteHeader() {
@@ -46,15 +47,15 @@ export function SiteHeader() {
         </form>
 
         <nav className="hidden md:flex items-center gap-1 ml-auto shrink-0">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/products">Browse</Link>
-          </Button>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/admin">Admin</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/account">Sign In</Link>
-          </Button>
+          <ButtonLink variant="ghost" size="sm" href="/products">
+            Browse
+          </ButtonLink>
+          <ButtonLink variant="ghost" size="sm" href="/admin">
+            Admin
+          </ButtonLink>
+          <ButtonLink size="sm" href="/account">
+            Sign In
+          </ButtonLink>
         </nav>
       </div>
     </header>

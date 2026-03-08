@@ -21,7 +21,11 @@
       "Bash(npx prisma generate)",
       "mcp__Claude_Preview__preview_start",
       "Bash(npm --version)",
-      "Bash(cmd /c \"where npm\")"
+      "Bash(cmd /c \"where npm\")",
+      "Bash(gh auth status)",
+      "Bash(cmd /c \"where gh\")",
+      "Bash(winget list --id GitHub.cli)",
+      "Bash(docker.exe compose up -d)"
     ]
   }
 }

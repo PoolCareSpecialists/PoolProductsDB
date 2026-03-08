@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { ChevronLeft, ChevronRight, PackageX } from "lucide-react";
 
 const PAGE_SIZE = 24;
@@ -57,9 +58,9 @@ export async function SearchResults({ query, category, page }: SearchResultsProp
             ? `No results for "${query}". Try a different search term.`
             : "No products in this category yet."}
         </p>
-        <Button variant="outline" asChild>
-          <Link href="/products/new">Add a product</Link>
-        </Button>
+        <ButtonLink variant="outline" href="/products/new">
+          Add a product
+        </ButtonLink>
       </div>
     );
   }
@@ -128,35 +129,31 @@ export async function SearchResults({ query, category, page }: SearchResultsProp
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page <= 1} asChild={page > 1}>
-            {page > 1 ? (
-              <Link href={buildPageUrl(page - 1)}>
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Link>
-            ) : (
-              <span>
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </span>
-            )}
-          </Button>
+          {page <= 1 ? (
+            <Button variant="outline" size="sm" disabled>
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+          ) : (
+            <ButtonLink variant="outline" size="sm" href={buildPageUrl(page - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </ButtonLink>
+          )}
           <span className="text-sm text-muted-foreground px-2">
             Page {page} of {totalPages}
           </span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} asChild={page < totalPages}>
-            {page < totalPages ? (
-              <Link href={buildPageUrl(page + 1)}>
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            ) : (
-              <span>
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </span>
-            )}
-          </Button>
+          {page >= totalPages ? (
+            <Button variant="outline" size="sm" disabled>
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <ButtonLink variant="outline" size="sm" href={buildPageUrl(page + 1)}>
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </ButtonLink>
+          )}
         </div>
       )}
     </div>

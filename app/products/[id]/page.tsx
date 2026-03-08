@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import Link from "next/link";
 import {
   ExternalLink,
@@ -163,12 +164,10 @@ export default async function ProductDetailPage({ params }: Props) {
           )}
 
           <div className="flex gap-2 mt-2">
-            <Button size="sm" variant="outline" asChild>
-              <Link href={`/products/${product.id}/suggest-edit`}>
-                <Pencil className="h-3.5 w-3.5 mr-1.5" />
-                Suggest Edit
-              </Link>
-            </Button>
+            <ButtonLink size="sm" variant="outline" href={`/products/${product.id}/suggest-edit`}>
+              <Pencil className="h-3.5 w-3.5 mr-1.5" />
+              Suggest Edit
+            </ButtonLink>
           </div>
         </div>
       </div>
@@ -391,9 +390,9 @@ function EmptyTabState({
     <div className="flex flex-col items-center justify-center py-12 text-center gap-2 text-muted-foreground">
       <Icon className="h-8 w-8 opacity-30" />
       <p className="text-sm">{message}</p>
-      <Button variant="outline" size="sm" asChild>
-        <Link href="#">Suggest data</Link>
-      </Button>
+      <ButtonLink variant="outline" size="sm" href="#">
+        Suggest data
+      </ButtonLink>
     </div>
   );
 }

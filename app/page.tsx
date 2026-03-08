@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button-link";
 import { Search, Database, BookOpen, Wrench } from "lucide-react";
 
 const FEATURE_CARDS = [
@@ -57,15 +57,13 @@ export default function HomePage() {
             accessible.
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
-            <Button size="lg" asChild>
-              <Link href="/search">
-                <Search className="mr-2 h-4 w-4" />
-                Search Products
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/products">Browse All</Link>
-            </Button>
+            <ButtonLink size="lg" href="/search">
+              <Search className="mr-2 h-4 w-4" />
+              Search Products
+            </ButtonLink>
+            <ButtonLink size="lg" variant="outline" href="/products">
+              Browse All
+            </ButtonLink>
           </div>
         </div>
       </section>
@@ -129,9 +127,9 @@ export default function HomePage() {
             <span className="text-blue-600">GET</span>{" "}
             <span className="text-green-600">/api/v1/products?q=hayward+super+pump</span>
           </div>
-          <Button variant="outline" asChild>
-            <Link href="/api/v1/products">Explore the API</Link>
-          </Button>
+          <ButtonLink variant="outline" href="/api/v1/products">
+            Explore the API
+          </ButtonLink>
         </div>
       </section>
     </div>
