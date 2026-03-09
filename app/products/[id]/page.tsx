@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { ReviewSection } from "@/components/products/review-section";
 import { StoreLinkSection } from "@/components/products/store-link-section";
+import { BarcodeDisplay } from "@/components/products/barcode-display";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -223,6 +224,16 @@ export default async function ProductDetailPage({ params }: Props) {
               <p className="font-medium">{product.category.name}</p>
             </div>
           </div>
+
+          {/* Barcode SVG */}
+          {(product.upc || product.ean) && (
+            <div>
+              <BarcodeDisplay
+                value={(product.upc || product.ean)!}
+                format={product.upc ? "UPC" : "EAN13"}
+              />
+            </div>
+          )}
 
           {/* Pricing */}
           {(product.msrp || product.map) && (

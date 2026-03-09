@@ -1,5 +1,7 @@
 import { Suspense } from "react";
+import { prisma } from "@/lib/prisma";
 import { SearchResults } from "@/components/products/search-results";
+import { SearchFilters } from "@/components/products/search-filters";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function generateMetadata({
@@ -15,9 +17,27 @@ export function generateMetadata({
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; category?: string; page?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    category?: string;
+    manufacturer?: string;
+    status?: string;
+    page?: string;
+  }>;
 }) {
   const params = await searchParams;
+
+  // Fetch filter options
+  const [categories, manufacturers] = await Promise.all([
+    prisma.category.findMany({
+      select: { id: true, name: true, slug: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.manufacturer.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
@@ -33,10 +53,14 @@ export default async function SearchPage({
         </h1>
       </div>
 
+      <SearchFilters categories={categories} manufacturers={manufacturers} />
+
       <Suspense fallback={<SearchSkeleton />}>
         <SearchResults
           query={params.q ?? ""}
           category={params.category}
+          manufacturer={params.manufacturer}
+          status={params.status}
           page={parseInt(params.page ?? "1")}
         />
       </Suspense>
