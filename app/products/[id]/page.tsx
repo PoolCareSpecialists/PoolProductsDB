@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,13 @@ import {
   Package,
   Beaker,
   Pencil,
+  Star,
+  ShoppingCart,
+  Shield,
+  Award,
 } from "lucide-react";
+import { ReviewSection } from "@/components/products/review-section";
+import { StoreLinkSection } from "@/components/products/store-link-section";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -25,21 +32,30 @@ export async function generateMetadata({ params }: Props) {
     include: { brand: true },
   });
   if (!product) return { title: "Product Not Found" };
-  return { title: `${product.name} — ${product.brand.name}` };
+  return {
+    title: `${product.name} — ${product.brand.name} | Pool Products DB`,
+    description: product.description ?? undefined,
+  };
 }
 
 export default async function ProductDetailPage({ params }: Props) {
   const { id } = await params;
+  const { userId } = await auth();
 
   const product = await prisma.product.findUnique({
     where: { id },
     include: {
       brand: { include: { manufacturer: true } },
-      category: { include: { parent: true } },
+      category: { include: { parent: { include: { parent: true } } } },
       images: { orderBy: [{ isPrimary: "desc" }, { sortOrder: "asc" }] },
       specs: { orderBy: { sortOrder: "asc" } },
       maintenanceSchedules: { orderBy: { sortOrder: "asc" } },
       documents: { orderBy: { createdAt: "asc" } },
+      reviews: {
+        include: { user: { select: { id: true, name: true, clerkId: true } } },
+        orderBy: { createdAt: "desc" },
+      },
+      storeLinks: { orderBy: { createdAt: "desc" } },
       replacementPartsFrom: {
         include: {
           compatibleProduct: {
@@ -54,22 +70,42 @@ export default async function ProductDetailPage({ params }: Props) {
           },
         },
       },
+      _count: { select: { reviews: true } },
     },
   });
 
   if (!product) notFound();
 
+  // Get current DB user id for client components
+  let dbUserId: string | null = null;
+  let dbUserRole: string | null = null;
+  if (userId) {
+    const dbUser = await prisma.user.findUnique({ where: { clerkId: userId } });
+    dbUserId = dbUser?.id ?? null;
+    dbUserRole = dbUser?.role ?? null;
+  }
+
   const primaryImage = product.images.find((i) => i.isPrimary) ?? product.images[0];
-  const breadcrumb = [
-    product.category.parent?.name,
-    product.category.name,
-  ].filter(Boolean);
+
+  // Build breadcrumb (up to 3 levels)
+  const breadcrumb: string[] = [];
+  if (product.category.parent?.parent?.name) breadcrumb.push(product.category.parent.parent.name);
+  if (product.category.parent?.name) breadcrumb.push(product.category.parent.name);
+  breadcrumb.push(product.category.name);
+
+  // Average rating
+  const avgRating =
+    product.reviews.length > 0
+      ? product.reviews.reduce((sum, r) => sum + r.rating, 0) / product.reviews.length
+      : null;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       {/* Breadcrumb */}
       <nav className="text-sm text-muted-foreground mb-6 flex gap-1 flex-wrap">
-        <Link href="/products" className="hover:text-foreground">Products</Link>
+        <Link href="/products" className="hover:text-foreground">
+          Products
+        </Link>
         {breadcrumb.map((crumb) => (
           <span key={crumb} className="flex gap-1">
             <span>/</span>
@@ -78,6 +114,7 @@ export default async function ProductDetailPage({ params }: Props) {
         ))}
       </nav>
 
+      {/* ── Hero ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         {/* Image */}
         <div className="lg:col-span-1">
@@ -122,16 +159,26 @@ export default async function ProductDetailPage({ params }: Props) {
                 {product.brand.manufacturer.name}
               </span>
               <span className="text-muted-foreground">·</span>
-              <span className="text-sm text-muted-foreground">
-                {product.brand.name}
-              </span>
+              <span className="text-sm text-muted-foreground">{product.brand.name}</span>
               {product.status !== "ACTIVE" && (
                 <Badge variant="secondary">{product.status}</Badge>
               )}
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold">{product.name}</h1>
+
+            {/* Star rating summary */}
+            {avgRating !== null && (
+              <div className="flex items-center gap-2 mt-2">
+                <StarDisplay rating={avgRating} />
+                <span className="text-sm text-muted-foreground">
+                  {avgRating.toFixed(1)} ({product._count.reviews}{" "}
+                  {product._count.reviews === 1 ? "review" : "reviews"})
+                </span>
+              </div>
+            )}
           </div>
 
+          {/* Identifier grid */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
             {product.modelNumber && (
               <div className="bg-muted/50 rounded-lg p-3">
@@ -143,6 +190,26 @@ export default async function ProductDetailPage({ params }: Props) {
               <div className="bg-muted/50 rounded-lg p-3">
                 <p className="text-xs text-muted-foreground mb-1">UPC</p>
                 <p className="font-mono font-medium">{product.upc}</p>
+              </div>
+            )}
+            {product.ean && (
+              <div className="bg-muted/50 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground mb-1">EAN</p>
+                <p className="font-mono font-medium">{product.ean}</p>
+              </div>
+            )}
+            {product.asin && (
+              <div className="bg-muted/50 rounded-lg p-3">
+                <p className="text-xs text-muted-foreground mb-1">ASIN</p>
+                <a
+                  href={`https://www.amazon.com/dp/${product.asin}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono font-medium text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  {product.asin}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
               </div>
             )}
             {product.sku && (
@@ -157,9 +224,65 @@ export default async function ProductDetailPage({ params }: Props) {
             </div>
           </div>
 
+          {/* MSRP */}
+          {product.msrp && (
+            <p className="text-sm">
+              <span className="text-muted-foreground">MSRP: </span>
+              <span className="font-semibold">${Number(product.msrp).toFixed(2)}</span>
+            </p>
+          )}
+
+          {/* Physical details row */}
+          {(product.dimensions || product.weight || product.countryOfOrigin || product.warrantyYears) && (
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              {product.dimensions && <span>📐 {product.dimensions}</span>}
+              {product.weight && <span>⚖️ {product.weight}</span>}
+              {product.countryOfOrigin && <span>🌍 Made in {product.countryOfOrigin}</span>}
+              {product.warrantyYears && (
+                <span>🛡️ {product.warrantyYears}-year warranty</span>
+              )}
+            </div>
+          )}
+
+          {/* Certifications */}
+          {product.certifications.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {product.certifications.map((cert) => (
+                <span
+                  key={cert}
+                  className="inline-flex items-center gap-1 text-xs bg-green-50 text-green-700 border border-green-200 rounded-full px-2.5 py-1"
+                >
+                  <Award className="h-3 w-3" />
+                  {cert}
+                </span>
+              ))}
+            </div>
+          )}
+
           {product.description && (
-            <p className="text-muted-foreground leading-relaxed">
-              {product.description}
+            <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+          )}
+
+          {/* Feature list */}
+          {product.features.length > 0 && (
+            <ul className="space-y-1">
+              {product.features.map((f, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <span className="text-blue-500 mt-0.5">•</span>
+                  <span>{f}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Release date */}
+          {product.releaseDate && (
+            <p className="text-xs text-muted-foreground">
+              Released:{" "}
+              {new Date(product.releaseDate).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+              })}
             </p>
           )}
 
@@ -172,9 +295,9 @@ export default async function ProductDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* ── Tabs ─────────────────────────────────────────────────── */}
       <Tabs defaultValue="specs">
-        <TabsList className="mb-4">
+        <TabsList className="mb-4 flex-wrap h-auto gap-1">
           <TabsTrigger value="specs">
             Specifications ({product.specs.length})
           </TabsTrigger>
@@ -215,9 +338,7 @@ export default async function ProductDetailPage({ params }: Props) {
                       <td className="px-4 py-3">
                         {spec.specValue}
                         {spec.unit && (
-                          <span className="text-muted-foreground ml-1">
-                            {spec.unit}
-                          </span>
+                          <span className="text-muted-foreground ml-1">{spec.unit}</span>
                         )}
                       </td>
                     </tr>
@@ -244,17 +365,13 @@ export default async function ProductDetailPage({ params }: Props) {
                   className="rounded-lg border p-4 flex items-start gap-4"
                 >
                   <div className="bg-blue-100 text-blue-700 rounded-lg px-3 py-2 text-center shrink-0 min-w-[80px]">
-                    <p className="text-lg font-bold leading-tight">
-                      {task.intervalValue}
-                    </p>
+                    <p className="text-lg font-bold leading-tight">{task.intervalValue}</p>
                     <p className="text-xs">{task.intervalUnit}</p>
                   </div>
                   <div>
                     <p className="font-medium">{task.taskName}</p>
                     {task.notes && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {task.notes}
-                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">{task.notes}</p>
                     )}
                   </div>
                 </div>
@@ -331,9 +448,7 @@ export default async function ProductDetailPage({ params }: Props) {
                       {rel.compatibleProduct.brand.name}
                     </p>
                     {rel.notes && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {rel.notes}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{rel.notes}</p>
                     )}
                   </div>
                 </Link>
@@ -369,9 +484,7 @@ export default async function ProductDetailPage({ params }: Props) {
                       {rel.chemicalProduct.brand.name}
                     </p>
                     {rel.notes && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {rel.notes}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">{rel.notes}</p>
                     )}
                   </div>
                 </Link>
@@ -380,6 +493,77 @@ export default async function ProductDetailPage({ params }: Props) {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* ── Where to Buy ─────────────────────────────────────────── */}
+      <div className="mt-10 border-t pt-8">
+        <div className="flex items-center gap-2 mb-4">
+          <ShoppingCart className="h-5 w-5" />
+          <h2 className="text-lg font-semibold">Where to Buy</h2>
+        </div>
+        <StoreLinkSection
+          productId={product.id}
+          storeLinks={product.storeLinks.map((s) => ({
+            id: s.id,
+            storeName: s.storeName,
+            storeUrl: s.storeUrl,
+            price: s.price ? Number(s.price) : null,
+            currency: s.currency,
+            addedById: s.addedById,
+          }))}
+          isSignedIn={!!userId}
+          dbUserId={dbUserId}
+          isAdmin={dbUserRole === "ADMIN"}
+        />
+      </div>
+
+      {/* ── Reviews ──────────────────────────────────────────────── */}
+      <div className="mt-10 border-t pt-8">
+        <div className="flex items-center gap-2 mb-4">
+          <Star className="h-5 w-5" />
+          <h2 className="text-lg font-semibold">
+            Product Reviews
+            {product._count.reviews > 0 && (
+              <span className="text-muted-foreground font-normal text-base ml-2">
+                ({product._count.reviews})
+              </span>
+            )}
+          </h2>
+        </div>
+        <ReviewSection
+          productId={product.id}
+          reviews={product.reviews.map((r) => ({
+            id: r.id,
+            rating: r.rating,
+            title: r.title,
+            body: r.body,
+            createdAt: r.createdAt.toISOString(),
+            user: { id: r.user.id, name: r.user.name, clerkId: r.user.clerkId },
+          }))}
+          avgRating={avgRating}
+          isSignedIn={!!userId}
+          dbUserId={dbUserId}
+          isAdmin={dbUserRole === "ADMIN"}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ── Helpers ────────────────────────────────────────────────────────
+
+function StarDisplay({ rating }: { rating: number }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star
+          key={n}
+          className={`h-4 w-4 ${
+            n <= Math.round(rating)
+              ? "fill-yellow-400 text-yellow-400"
+              : "fill-muted text-muted-foreground/30"
+          }`}
+        />
+      ))}
     </div>
   );
 }

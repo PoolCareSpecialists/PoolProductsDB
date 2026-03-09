@@ -36,6 +36,19 @@ export async function GET(
           },
         },
       },
+      storeLinks: { orderBy: { createdAt: "desc" } },
+      _count: { select: { reviews: true } },
+      reviews: {
+        select: {
+          id: true,
+          rating: true,
+          title: true,
+          body: true,
+          createdAt: true,
+          user: { select: { name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -43,5 +56,15 @@ export async function GET(
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ data: product });
+  const avgRating =
+    product.reviews.length > 0
+      ? product.reviews.reduce((s, r) => s + r.rating, 0) / product.reviews.length
+      : null;
+
+  return NextResponse.json({
+    data: {
+      ...product,
+      avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
+    },
+  });
 }
