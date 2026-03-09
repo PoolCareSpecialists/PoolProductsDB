@@ -1,6 +1,16 @@
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button-link";
-import { Search, Database, BookOpen, Wrench } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import {
+  Search,
+  Database,
+  BookOpen,
+  Wrench,
+  Users,
+  Package,
+  Factory,
+  Star,
+} from "lucide-react";
 
 const FEATURE_CARDS = [
   {
@@ -40,7 +50,19 @@ const EXAMPLE_CATEGORIES = [
   { name: "Cleaners", slug: "cleaners" },
 ];
 
-export default function HomePage() {
+export const revalidate = 60; // revalidate stats every 60s
+
+export default async function HomePage() {
+  // Fetch live stats (cached for 60s)
+  const [productCount, manufacturerCount, categoryCount, reviewCount, contributorCount] =
+    await Promise.all([
+      prisma.product.count(),
+      prisma.manufacturer.count(),
+      prisma.category.count(),
+      prisma.productReview.count(),
+      prisma.user.count(),
+    ]);
+
   return (
     <div>
       {/* Hero */}
@@ -64,6 +86,39 @@ export default function HomePage() {
             <ButtonLink size="lg" variant="outline" href="/products">
               Browse All
             </ButtonLink>
+          </div>
+        </div>
+      </section>
+
+      {/* Live Stats */}
+      <section className="py-8 px-4 border-b">
+        <div className="container mx-auto max-w-4xl">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+            <StatCard
+              icon={Package}
+              value={productCount}
+              label="Products"
+            />
+            <StatCard
+              icon={Factory}
+              value={manufacturerCount}
+              label="Manufacturers"
+            />
+            <StatCard
+              icon={Database}
+              value={categoryCount}
+              label="Categories"
+            />
+            <StatCard
+              icon={Star}
+              value={reviewCount}
+              label="Reviews"
+            />
+            <StatCard
+              icon={Users}
+              value={contributorCount}
+              label="Contributors"
+            />
           </div>
         </div>
       </section>
@@ -118,20 +173,46 @@ export default function HomePage() {
       {/* API CTA */}
       <section className="py-16 px-4">
         <div className="container mx-auto max-w-3xl text-center">
-          <h2 className="text-2xl font-bold mb-3">Open REST API</h2>
+          <h2 className="text-2xl font-bold mb-3">REST API with Free Tier</h2>
           <p className="text-muted-foreground mb-6">
-            Access the full database programmatically. Use our API to integrate
-            pool product data into your own applications.
+            Access the full database programmatically. Free tier includes 100
+            requests/day. Developer and business plans available for higher
+            volume.
           </p>
           <div className="bg-muted rounded-lg p-4 text-left font-mono text-sm mb-6 overflow-x-auto">
             <span className="text-blue-600">GET</span>{" "}
             <span className="text-green-600">/api/v1/products?q=hayward+super+pump</span>
           </div>
-          <ButtonLink variant="outline" href="/api/v1/products">
-            Explore the API
-          </ButtonLink>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <ButtonLink variant="default" href="/pricing">
+              View API Plans
+            </ButtonLink>
+            <ButtonLink variant="outline" href="/docs">
+              Read the Docs
+            </ButtonLink>
+          </div>
         </div>
       </section>
+    </div>
+  );
+}
+
+function StatCard({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  value: number;
+  label: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1 py-3">
+      <Icon className="h-5 w-5 text-blue-600 mb-1" />
+      <span className="text-2xl font-bold tabular-nums">
+        {value.toLocaleString()}
+      </span>
+      <span className="text-xs text-muted-foreground">{label}</span>
     </div>
   );
 }

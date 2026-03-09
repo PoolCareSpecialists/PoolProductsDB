@@ -11,10 +11,18 @@ const PAGE_SIZE = 24;
 type SearchResultsProps = {
   query: string;
   category?: string;
+  manufacturer?: string;
+  status?: string;
   page: number;
 };
 
-export async function SearchResults({ query, category, page }: SearchResultsProps) {
+export async function SearchResults({
+  query,
+  category,
+  manufacturer,
+  status,
+  page,
+}: SearchResultsProps) {
   const skip = (page - 1) * PAGE_SIZE;
 
   const where: Prisma.ProductWhereInput = {
@@ -31,6 +39,10 @@ export async function SearchResults({ query, category, page }: SearchResultsProp
       ],
     }),
     ...(category && { category: { slug: category } }),
+    ...(manufacturer && {
+      brand: { manufacturer: { name: { equals: manufacturer, mode: "insensitive" } } },
+    }),
+    ...(status && { status: status as Prisma.EnumProductStatusFilter }),
   };
 
   const [products, total] = await Promise.all([
@@ -71,6 +83,8 @@ export async function SearchResults({ query, category, page }: SearchResultsProp
     const params = new URLSearchParams();
     if (query) params.set("q", query);
     if (category) params.set("category", category);
+    if (manufacturer) params.set("manufacturer", manufacturer);
+    if (status) params.set("status", status);
     if (p > 1) params.set("page", String(p));
     return `/search?${params.toString()}`;
   }
