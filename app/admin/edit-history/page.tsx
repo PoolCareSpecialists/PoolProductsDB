@@ -124,7 +124,7 @@ export default async function EditHistoryPage({
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {record.changedBy.name || record.changedBy.email}
+                      {record.changedBy?.name || record.changedBy?.email || "Unknown"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                       {formatDate(record.changedAt)}

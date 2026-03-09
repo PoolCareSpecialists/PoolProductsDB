@@ -147,7 +147,7 @@ export default async function PendingEditsPage({
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {edit.submittedBy.name || edit.submittedBy.email}
+                    {edit.submittedBy?.name || edit.submittedBy?.email || "Unknown"}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {formatDate(edit.createdAt)}
