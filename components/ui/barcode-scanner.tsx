@@ -23,6 +23,24 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
     async function startScanner() {
       try {
+        // Camera access requires a secure context (HTTPS or localhost).
+        // navigator.mediaDevices is undefined over plain HTTP on mobile browsers.
+        if (!window.isSecureContext) {
+          setErrorMessage(
+            "Camera access requires HTTPS. Please visit this site over a secure connection (https://)."
+          );
+          setStatus("error");
+          return;
+        }
+
+        if (!navigator.mediaDevices?.getUserMedia) {
+          setErrorMessage(
+            "Your browser doesn't support camera access. Try the latest Chrome or Safari."
+          );
+          setStatus("error");
+          return;
+        }
+
         const { BrowserMultiFormatReader } = await import("@zxing/browser");
         const reader = new BrowserMultiFormatReader();
 
@@ -30,8 +48,10 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
         setStatus("scanning");
 
-        const controls = await reader.decodeFromVideoDevice(
-          undefined,
+        // Use facingMode: "environment" to prefer the rear camera on mobile,
+        // which is far more practical for barcode scanning.
+        const controls = await reader.decodeFromConstraints(
+          { video: { facingMode: { ideal: "environment" } } },
           videoRef.current!,
           (result, _error) => {
             if (result && !cancelled) {
