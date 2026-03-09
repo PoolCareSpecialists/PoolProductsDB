@@ -60,6 +60,14 @@ export function SiteHeader() {
           <ButtonLink variant="ghost" size="sm" href="/products">
             Browse
           </ButtonLink>
+          <ButtonLink variant="ghost" size="sm" href="/pricing">
+            API
+          </ButtonLink>
+          {isLoaded && isSignedIn && (
+            <ButtonLink variant="ghost" size="sm" href="/api-keys">
+              Keys
+            </ButtonLink>
+          )}
           {isLoaded && isSignedIn && isAdmin && (
             <ButtonLink variant="ghost" size="sm" href="/admin">
               Admin
