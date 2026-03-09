@@ -224,12 +224,22 @@ export default async function ProductDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* MSRP */}
-          {product.msrp && (
-            <p className="text-sm">
-              <span className="text-muted-foreground">MSRP: </span>
-              <span className="font-semibold">${Number(product.msrp).toFixed(2)}</span>
-            </p>
+          {/* Pricing */}
+          {(product.msrp || product.map) && (
+            <div className="flex flex-wrap gap-4 text-sm">
+              {product.msrp && (
+                <p>
+                  <span className="text-muted-foreground">MSRP: </span>
+                  <span className="font-semibold">${Number(product.msrp).toFixed(2)}</span>
+                </p>
+              )}
+              {product.map && (
+                <p>
+                  <span className="text-muted-foreground">MAP: </span>
+                  <span className="font-semibold">${Number(product.map).toFixed(2)}</span>
+                </p>
+              )}
+            </div>
           )}
 
           {/* Physical details row */}

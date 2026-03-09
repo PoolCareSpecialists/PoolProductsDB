@@ -23,6 +23,8 @@ export async function SearchResults({ query, category, page }: SearchResultsProp
         { name: { contains: query, mode: "insensitive" } },
         { modelNumber: { contains: query, mode: "insensitive" } },
         { upc: { contains: query } },
+        { ean: { contains: query } },
+        { asin: { contains: query, mode: "insensitive" } },
         { sku: { contains: query, mode: "insensitive" } },
         { brand: { name: { contains: query, mode: "insensitive" } } },
         { brand: { manufacturer: { name: { contains: query, mode: "insensitive" } } } },

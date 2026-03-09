@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
         { name: { contains: query, mode: "insensitive" } },
         { modelNumber: { contains: query, mode: "insensitive" } },
         { upc: { contains: query, mode: "insensitive" } },
+        { ean: { contains: query, mode: "insensitive" } },
+        { asin: { contains: query, mode: "insensitive" } },
         { sku: { contains: query, mode: "insensitive" } },
         { description: { contains: query, mode: "insensitive" } },
         { brand: { name: { contains: query, mode: "insensitive" } } },
