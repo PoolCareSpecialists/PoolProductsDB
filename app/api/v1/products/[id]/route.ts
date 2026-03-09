@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { validateApiKey } from "@/lib/api-auth";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const authResult = await validateApiKey(request);
+  if (authResult instanceof NextResponse) return authResult;
+
   const { id } = await params;
 
   const product = await prisma.product.findUnique({

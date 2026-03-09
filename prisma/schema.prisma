@@ -204,7 +204,6 @@ model User {
   email     String   @unique
   name      String?
   role      UserRole @default(CONTRIBUTOR)
-  apiKey    String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -215,6 +214,7 @@ model User {
   editHistory       EditHistory[]
   reviews           ProductReview[]
   storeLinks        StoreLink[]
+  apiKeys           ApiKey[]
 }
 
 enum UserRole {
@@ -297,4 +297,47 @@ model StoreLink {
   addedBy User?   @relation(fields: [addedById], references: [id], onDelete: SetNull)
 
   @@index([productId])
+}
+
+// ─── API Monetization ─────────────────────────────────────────────
+
+enum ApiPlan {
+  FREE
+  DEVELOPER
+  STARTUP
+  ENTERPRISE
+}
+
+model ApiKey {
+  id           String    @id @default(cuid())
+  userId       String
+  key          String    @unique
+  name         String    @default("Default")
+  plan         ApiPlan   @default(FREE)
+  dailyLimit   Int       @default(100)
+  monthlyLimit Int       @default(1000)
+  isActive     Boolean   @default(true)
+  lastUsedAt   DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usage ApiUsage[]
+
+  @@index([key])
+  @@index([userId])
+}
+
+model ApiUsage {
+  id       String   @id @default(cuid())
+  apiKeyId String
+  date     DateTime @db.Date
+  endpoint String
+  requests Int      @default(0)
+
+  apiKey ApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+
+  @@unique([apiKeyId, date, endpoint])
+  @@index([apiKeyId, date])
 }

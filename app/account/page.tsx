@@ -3,8 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { Key } from "lucide-react";
 import { syncUser } from "@/lib/sync-user";
-import { generateApiKey } from "@/app/account/actions";
-import { Button } from "@/components/ui/button";
+import { prisma } from "@/lib/prisma";
 import { ButtonLink } from "@/components/ui/button-link";
 
 export const metadata = { title: "My Account" };
@@ -55,44 +54,14 @@ export default async function AccountPage() {
         </div>
       </section>
 
-      {/* API Key */}
+      {/* API Keys */}
       <section className="rounded-lg border bg-card p-5 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Key className="h-4 w-4 text-muted-foreground" />
-          <h2 className="font-semibold">API Key</h2>
+          <h2 className="font-semibold">API Keys</h2>
         </div>
 
-        {dbUser.apiKey ? (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Use this key to authenticate write requests to the REST API.
-            </p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 bg-muted rounded px-3 py-2 text-xs font-mono break-all">
-                {dbUser.apiKey}
-              </code>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Pass as{" "}
-              <code className="bg-muted px-1 rounded text-xs">
-                Authorization: Bearer &lt;key&gt;
-              </code>{" "}
-              on all write requests.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              Generate an API key to access the Pool Products DB REST API
-              programmatically.
-            </p>
-            <form action={generateApiKey}>
-              <Button type="submit" size="sm" variant="outline">
-                Generate API Key
-              </Button>
-            </form>
-          </div>
-        )}
+        <ApiKeysSummary userId={dbUser.id} />
       </section>
 
       {/* Contributions */}
@@ -110,6 +79,37 @@ export default async function AccountPage() {
           </ButtonLink>
         </div>
       </section>
+    </div>
+  );
+}
+
+async function ApiKeysSummary({ userId }: { userId: string }) {
+  const keyCount = await prisma.apiKey.count({
+    where: { userId, isActive: true },
+  });
+
+  if (keyCount === 0) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          Create API keys to access the Pool Products DB REST API
+          programmatically.
+        </p>
+        <ButtonLink href="/api-keys" size="sm" variant="outline">
+          Manage API Keys
+        </ButtonLink>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">
+        You have <strong>{keyCount}</strong> active API key{keyCount !== 1 ? "s" : ""}.
+      </p>
+      <ButtonLink href="/api-keys" size="sm" variant="outline">
+        Manage API Keys
+      </ButtonLink>
     </div>
   );
 }
