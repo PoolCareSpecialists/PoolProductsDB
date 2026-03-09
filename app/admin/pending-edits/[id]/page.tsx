@@ -249,7 +249,7 @@ export default async function PendingEditDetailPage({
           <p className="text-sm text-muted-foreground mt-1">
             Submitted by{" "}
             <span className="font-medium text-foreground">
-              {edit.submittedBy.name || edit.submittedBy.email}
+              {edit.submittedBy?.name || edit.submittedBy?.email || "Unknown"}
             </span>{" "}
             on {formatDate(edit.createdAt)}
           </p>

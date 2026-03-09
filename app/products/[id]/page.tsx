@@ -198,6 +198,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <EmptyTabState
               icon={Package}
               message="No specifications added yet."
+              productId={product.id}
             />
           ) : (
             <div className="rounded-lg border overflow-hidden">
@@ -233,6 +234,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <EmptyTabState
               icon={Wrench}
               message="No maintenance schedule added yet."
+              productId={product.id}
             />
           ) : (
             <div className="space-y-3">
@@ -267,6 +269,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <EmptyTabState
               icon={FileText}
               message="No documents added yet."
+              productId={product.id}
             />
           ) : (
             <div className="space-y-2">
@@ -298,6 +301,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <EmptyTabState
               icon={Package}
               message="No compatible parts listed yet."
+              productId={product.id}
             />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -344,6 +348,7 @@ export default async function ProductDetailPage({ params }: Props) {
             <EmptyTabState
               icon={Beaker}
               message="No compatible chemicals listed yet."
+              productId={product.id}
             />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -382,15 +387,17 @@ export default async function ProductDetailPage({ params }: Props) {
 function EmptyTabState({
   icon: Icon,
   message,
+  productId,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   message: string;
+  productId: string;
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center gap-2 text-muted-foreground">
       <Icon className="h-8 w-8 opacity-30" />
       <p className="text-sm">{message}</p>
-      <ButtonLink variant="outline" size="sm" href="#">
+      <ButtonLink variant="outline" size="sm" href={`/products/${productId}/suggest-edit`}>
         Suggest data
       </ButtonLink>
     </div>

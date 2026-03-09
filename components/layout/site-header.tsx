@@ -3,16 +3,22 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useAuth, SignInButton, UserButton } from "@clerk/nextjs";
+import { useAuth, useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ButtonLink } from "@/components/ui/button-link";
-import { Search, ScanBarcode } from "lucide-react";
+import { BarcodeScanButton } from "@/components/ui/barcode-scanner";
+import { Search } from "lucide-react";
 
 export function SiteHeader() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const { isSignedIn, isLoaded } = useAuth();
+  const { user } = useUser();
+
+  // Check admin role from Clerk publicMetadata
+  const isAdmin =
+    (user?.publicMetadata as { role?: string } | undefined)?.role === "admin";
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -37,22 +43,14 @@ export function SiteHeader() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              id="header-search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by name, model number, or UPC…"
               className="pl-9"
             />
           </div>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            title="Scan barcode"
-            onClick={() => router.push("/search?scan=1")}
-            className="px-2.5"
-          >
-            <ScanBarcode className="h-4 w-4" />
-          </Button>
+          <BarcodeScanButton className="inline-flex items-center justify-center rounded-md border border-input bg-background px-2.5 h-8 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors" />
           <Button type="submit" size="sm">
             Search
           </Button>
@@ -62,7 +60,7 @@ export function SiteHeader() {
           <ButtonLink variant="ghost" size="sm" href="/products">
             Browse
           </ButtonLink>
-          {isLoaded && isSignedIn && (
+          {isLoaded && isSignedIn && isAdmin && (
             <ButtonLink variant="ghost" size="sm" href="/admin">
               Admin
             </ButtonLink>
