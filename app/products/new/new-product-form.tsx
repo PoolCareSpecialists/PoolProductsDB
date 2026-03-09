@@ -86,6 +86,19 @@ export function NewProductForm({
     formData.set("maintenance", JSON.stringify(maintenance));
     formData.set("documents", JSON.stringify(documents));
 
+    // Parse features (newline-separated) and certifications (comma-separated)
+    const featuresRaw = (formData.get("features") as string)?.trim() ?? "";
+    const features = featuresRaw
+      ? featuresRaw.split("\n").map((f) => f.trim()).filter(Boolean)
+      : [];
+    formData.set("featuresJson", JSON.stringify(features));
+
+    const certsRaw = (formData.get("certifications") as string)?.trim() ?? "";
+    const certifications = certsRaw
+      ? certsRaw.split(",").map((c) => c.trim()).filter(Boolean)
+      : [];
+    formData.set("certificationsJson", JSON.stringify(certifications));
+
     startTransition(() => submitNewProduct(formData));
   }
 
@@ -231,6 +244,116 @@ export function NewProductForm({
             </Label>
             <Input id="sku" name="sku" placeholder="Internal SKU" className="text-sm" />
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="ean" className="text-sm font-medium">
+              EAN
+            </Label>
+            <Input id="ean" name="ean" placeholder="13-digit EAN barcode" className="text-sm" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="asin" className="text-sm font-medium">
+              ASIN
+            </Label>
+            <Input id="asin" name="asin" placeholder="Amazon ASIN (e.g. B08XYZ123)" className="text-sm" />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 2b. Pricing ── */}
+      <section className="rounded-lg border bg-card p-5 space-y-4">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          Pricing
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="msrp" className="text-sm font-medium">
+              MSRP
+            </Label>
+            <Input id="msrp" name="msrp" type="number" step="0.01" min="0" placeholder="e.g. 299.99" className="text-sm" />
+            <p className="text-xs text-muted-foreground">Manufacturer&apos;s Suggested Retail Price</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="map" className="text-sm font-medium">
+              MAP
+            </Label>
+            <Input id="map" name="map" type="number" step="0.01" min="0" placeholder="e.g. 249.99" className="text-sm" />
+            <p className="text-xs text-muted-foreground">Minimum Advertised Price</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 2c. Physical Details ── */}
+      <section className="rounded-lg border bg-card p-5 space-y-4">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          Physical Details
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="dimensions" className="text-sm font-medium">
+              Dimensions
+            </Label>
+            <Input id="dimensions" name="dimensions" placeholder='e.g. 24" x 12" x 18"' className="text-sm" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="weight" className="text-sm font-medium">
+              Weight
+            </Label>
+            <Input id="weight" name="weight" placeholder="e.g. 45 lbs" className="text-sm" />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="countryOfOrigin" className="text-sm font-medium">
+              Country of Origin
+            </Label>
+            <Input id="countryOfOrigin" name="countryOfOrigin" placeholder="e.g. USA" className="text-sm" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="warrantyYears" className="text-sm font-medium">
+              Warranty (years)
+            </Label>
+            <Input id="warrantyYears" name="warrantyYears" type="number" min="0" placeholder="e.g. 3" className="text-sm" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="releaseDate" className="text-sm font-medium">
+              Release Date
+            </Label>
+            <Input id="releaseDate" name="releaseDate" type="month" className="text-sm" />
+          </div>
+        </div>
+      </section>
+
+      {/* ── 2d. Features & Certifications ── */}
+      <section className="rounded-lg border bg-card p-5 space-y-4">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          Features & Certifications
+        </h2>
+        <div className="space-y-2">
+          <Label htmlFor="features" className="text-sm font-medium">
+            Features
+          </Label>
+          <Textarea
+            id="features"
+            name="features"
+            placeholder={"One feature per line:\ne.g. Variable speed motor\nEnergy Star certified\nSelf-priming design"}
+            className="min-h-[80px] text-sm"
+          />
+          <p className="text-xs text-muted-foreground">One feature per line</p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="certifications" className="text-sm font-medium">
+            Certifications
+          </Label>
+          <Input
+            id="certifications"
+            name="certifications"
+            placeholder="Comma-separated, e.g. NSF/ANSI 50, UL Listed, Energy Star"
+            className="text-sm"
+          />
+          <p className="text-xs text-muted-foreground">Comma-separated list</p>
         </div>
       </section>
 

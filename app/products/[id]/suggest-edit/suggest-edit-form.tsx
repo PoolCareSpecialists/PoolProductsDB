@@ -54,6 +54,132 @@ export function SuggestEditForm({ product }: { product: ProductWithDetails }) {
           current={product.sku}
           placeholder="Proposed SKU"
         />
+        <FieldRow
+          label="EAN"
+          name="ean"
+          current={product.ean}
+          placeholder="Proposed EAN"
+        />
+        <FieldRow
+          label="ASIN"
+          name="asin"
+          current={product.asin}
+          placeholder="Proposed ASIN"
+        />
+      </div>
+
+      {/* Pricing */}
+      <div className="rounded-lg border bg-card p-5 space-y-5">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          Pricing
+        </h2>
+        <FieldRow
+          label="MSRP"
+          name="msrp"
+          current={product.msrp ? `$${Number(product.msrp).toFixed(2)}` : null}
+          placeholder="e.g. 299.99"
+        />
+        <FieldRow
+          label="MAP (Min Advertised Price)"
+          name="map"
+          current={product.map ? `$${Number(product.map).toFixed(2)}` : null}
+          placeholder="e.g. 249.99"
+        />
+      </div>
+
+      {/* Physical Details */}
+      <div className="rounded-lg border bg-card p-5 space-y-5">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          Physical Details
+        </h2>
+        <FieldRow
+          label="Dimensions"
+          name="dimensions"
+          current={product.dimensions}
+          placeholder='e.g. 24" x 12" x 18"'
+        />
+        <FieldRow
+          label="Weight"
+          name="weight"
+          current={product.weight}
+          placeholder="e.g. 45 lbs"
+        />
+        <FieldRow
+          label="Country of Origin"
+          name="countryOfOrigin"
+          current={product.countryOfOrigin}
+          placeholder="e.g. USA"
+        />
+        <FieldRow
+          label="Warranty (years)"
+          name="warrantyYears"
+          current={product.warrantyYears?.toString() ?? null}
+          placeholder="e.g. 3"
+        />
+        <FieldRow
+          label="Release Date"
+          name="releaseDate"
+          current={
+            product.releaseDate
+              ? new Date(product.releaseDate).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                })
+              : null
+          }
+          placeholder="YYYY-MM (e.g. 2024-06)"
+        />
+      </div>
+
+      {/* Features */}
+      <div className="rounded-lg border bg-card p-5 space-y-4">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          Features
+        </h2>
+        {product.features.length > 0 && (
+          <div className="text-xs text-muted-foreground bg-muted/40 rounded p-3 space-y-1">
+            <p className="font-medium text-foreground mb-1">Current features:</p>
+            {product.features.map((f, i) => (
+              <p key={i}>• {f}</p>
+            ))}
+          </div>
+        )}
+        <Textarea
+          name="features"
+          placeholder={"Enter proposed features, one per line:\ne.g. Variable speed motor\nEnergy Star certified\nSelf-priming design"}
+          className="min-h-[80px] text-sm"
+        />
+        <p className="text-xs text-muted-foreground">
+          One feature per line. Leave blank to keep current features.
+        </p>
+      </div>
+
+      {/* Certifications */}
+      <div className="rounded-lg border bg-card p-5 space-y-4">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          Certifications
+        </h2>
+        {product.certifications.length > 0 && (
+          <div className="text-xs text-muted-foreground bg-muted/40 rounded p-3">
+            <span className="font-medium text-foreground">Current: </span>
+            {product.certifications.join(", ")}
+          </div>
+        )}
+        <Input
+          name="certifications"
+          placeholder="Comma-separated, e.g. NSF/ANSI 50, UL Listed, Energy Star"
+          className="text-sm"
+        />
+        <p className="text-xs text-muted-foreground">
+          Leave blank to keep current certifications.
+        </p>
+      </div>
+
+      {/* Product Details (continued) — Description */}
+      <div className="rounded-lg border bg-card p-5 space-y-5">
+        <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">
+          Description
+        </h2>
 
         {/* Description */}
         <div className="space-y-2">

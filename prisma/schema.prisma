@@ -55,9 +55,20 @@ model Product {
   name        String
   modelNumber String?
   upc         String?       @unique
+  ean         String?       @unique
+  asin        String?
   sku         String?
   description String?
-  status      ProductStatus @default(ACTIVE)
+  features        String[]
+  dimensions      String?
+  weight          String?
+  releaseDate     DateTime?
+  msrp            Decimal?  @db.Decimal(10, 2) // Manufacturer's Suggested Retail Price
+  map             Decimal?  @db.Decimal(10, 2) // Manufacturer's Advertised Price (min ad price floor)
+  countryOfOrigin String?
+  warrantyYears   Int?
+  certifications  String[]
+  status          ProductStatus @default(ACTIVE)
   createdById String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -72,6 +83,8 @@ model Product {
   images               ProductImage[]
   pendingEdits         PendingEdit[]
   editHistory          EditHistory[]
+  reviews              ProductReview[]
+  storeLinks           StoreLink[]
 
   replacementPartsFrom    ReplacementPart[]    @relation("SourceProduct")
   replacementPartsTo      ReplacementPart[]    @relation("CompatibleProduct")
@@ -200,6 +213,8 @@ model User {
   submittedEdits    PendingEdit[] @relation("EditSubmitter")
   reviewedEdits     PendingEdit[] @relation("EditReviewer")
   editHistory       EditHistory[]
+  reviews           ProductReview[]
+  storeLinks        StoreLink[]
 }
 
 enum UserRole {
@@ -246,4 +261,40 @@ enum EditStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+// ─── Community Features ───────────────────────────────────────────
+
+model ProductReview {
+  id        String   @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int      // 1–5
+  title     String?
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId])
+  @@index([productId])
+}
+
+model StoreLink {
+  id        String   @id @default(cuid())
+  productId String
+  addedById String?
+  storeName String
+  storeUrl  String
+  price     Decimal? @db.Decimal(10, 2)
+  currency  String   @default("USD")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  addedBy User?   @relation(fields: [addedById], references: [id], onDelete: SetNull)
+
+  @@index([productId])
 }
